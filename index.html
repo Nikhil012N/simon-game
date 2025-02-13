@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simon Game</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Press Start 2P", cursive;
+        text-align: center;
+        background-color: #1a1f71;
+      }
+      .game-board {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        width: 320px;
+        margin: 0 auto;
+      }
+      .game-button {
+        width: 150px;
+        height: 150px;
+        display: flex;
+        border: 4px solid black;
+        border-radius: 10px;
+      }
+      .active {
+        opacity: 0.5;
+        -webkit-transform: scale(0.95);
+        transform: scale(0.95);
+      }
+    </style>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body >
+    <div class="container mt-5">
+      <h1 class="mb-4 text-warning text-opacity-75">Simon Game</h1>
+      <div
+        id="message"
+        class="message-box my-4 d-inline-block p-10 mt-2 text-opacity-75 fs-1 text-warning"
+      >
+        Press Any Key to Start
+      </div>
+      <section id="game-board" class="game-board">
+        <div class="game-button bg-success" id="green" data-color="green"></div>
+        <div class="game-button bg-danger" id="red" data-color="red"></div>
+        <div
+          class="game-button bg-warning"
+          id="yellow"
+          data-color="yellow"
+        ></div>
+        <div class="game-button bg-primary" id="blue" data-color="blue"></div>
+      </section>
+    </div>
+
+    <script>
+      "use strict";
+      const colors = ["green", "red", "yellow", "blue"];
+      let sequence = [];
+      let userSequence = [];
+      let started = false;
+      let level = 0;
+
+      const gameButtons = document?.querySelectorAll(".game-button");
+      const messageBox = document?.getElementById("message");
+
+      const soundEffects = {
+        gameOver: new Audio("/sounds/super-mario-death-sound-sound-effect.mp3"),
+        clickSound: new Audio("/sounds/mario-coin-sound-effect.mp3"),
+        nextLevel: new Audio("/sounds/super-mario-coin-sound.mp3"),
+      };
+
+      // add and remove active class
+      const highlightButton = async (color) => {
+        const button = document?.getElementById(color);
+        button.classList.add("active");
+        await soundEffects?.clickSound?.play();
+        setTimeout(() => button.classList.remove("active"), 500);
+      };
+      // empty the user click sequence for next level to prevent game over and trigger highlight color function
+      const playSequence = async () => {
+        userSequence = [];
+        const lastElement = sequence?.[sequence?.length - 1];
+        await  highlightButton(lastElement);
+      };
+      // add  color to sequence[] and then play that sequence so that user see added color in screen
+      const addNewColor =async () => {
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        sequence.push(randomColor);
+        await   playSequence();
+        level++;
+        messageBox.textContent = `Level ${level}`;
+      };
+      const startGame = async () => {
+        if (!started) {
+          started = true;
+          await soundEffects?.nextLevel?.play();
+          messageBox.textContent = `Level ${level}`;
+          return addNewColor();
+        }
+        return;
+      };
+      const resetGame = () => {
+        sequence = [];
+        userSequence = [];
+        started = false;
+        level = 0;
+      };
+      // Check user's input
+      const checkSequence = async (index) => {
+        if (userSequence[index] !== sequence[index]) {
+          messageBox.textContent = "Game Over! Press Any Key to Restart";
+          await soundEffects?.gameOver?.play();
+          resetGame();
+          return;
+        }
+
+        if (userSequence.length === sequence.length) {
+          setTimeout(addNewColor, 1000);
+        }
+      };
+      // set function  to buttons
+      gameButtons.forEach((button) => {
+        button.addEventListener("click", (e) => {
+          if (!started) return;
+          const color = e.target.dataset.color;
+          highlightButton(color);
+          userSequence.push(color);
+          checkSequence(userSequence.length - 1);
+        });
+      });
+      document.addEventListener("keydown", startGame);
+    </script>
+  </body>
+</html>
